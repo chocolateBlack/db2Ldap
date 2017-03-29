@@ -73,15 +73,14 @@
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-webmvc</artifactId>
 			<version>3.2.13.RELEASE</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.ldap</groupId>
 			<artifactId>spring-ldap-core</artifactId>
-			<version>2.2.0.RELEASE</version>
+			<version>2.0.4.RELEASE</version>
 		</dependency>
 
-		<!--  Apache Commons --> 
+		<!--  Apache Commons  --> 
 		<dependency>
 			<groupId>commons-pool</groupId>
 			<artifactId>commons-pool</artifactId>

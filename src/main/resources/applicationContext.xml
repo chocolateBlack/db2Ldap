@@ -35,6 +35,38 @@
 
     <ldap:ldap-template id="ldapTemplate" context-source-ref="contextSource"/>
 
+    <!--
+        This will scan the org.springframework.ldap.samples.useradmin.domain package for interfaces
+        extending CrudRepository (in our case, LdapRepository), automatically creating repository
+        beans based on these interfaces.
+    -->
+    <ldap:repositories base-package="org.springframework.ldap.samples.useradmin.domain" />
+
+    <!--
+        This one will never be referenced directly, but the ldap:repositories tag will make sure
+        it will be 'wired in', because the GroupRepo interface extends from an interface that GroupRepoImpl
+        imlements.
+    -->
+    <bean class="org.springframework.ldap.samples.useradmin.domain.impl.GroupRepoImpl" />
+    <bean class="org.springframework.ldap.samples.useradmin.domain.impl.DepartmentRepoImpl" />
+    <bean class="org.springframework.ldap.samples.useradmin.service.UserService">
+        <property name="directoryType" value="${sample.ldap.directory.type}" />
+    </bean>
+
+    <!-- Required to make sure BaseLdapName is populated in UserService -->
+    <bean class="org.springframework.ldap.core.support.BaseLdapPathBeanPostProcessor" />
+
+    <beans profile="no-apacheds">
+        <!-- Populates the LDAP server with initial data -->
+        <bean class="org.springframework.ldap.test.LdifPopulator">
+            <property name="contextSource" ref="contextSource" />
+            <property name="resource" value="classpath:/setup_data.ldif" />
+            <property name="base" value="${sample.ldap.base}" />
+            <property name="clean" value="${sample.ldap.clean}" />
+            <property name="defaultBase" value="dc=example,dc=com" />
+        </bean>
+    </beans>
+    
     
     <!--
         relational database configuration

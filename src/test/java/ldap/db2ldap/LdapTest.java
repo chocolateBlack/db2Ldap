@@ -4,33 +4,24 @@ import java.io.File;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
+import org.springframework.ldap.core.LdapTemplate;
 
-/**
- * Unit test for simple App.
- */
-public class AppTest{
-	@Autowired
-	private JdbcTemplate jdbcTemplate;
-	
+public class LdapTest {
+	private LdapTemplate ldapTemplate;
 	ApplicationContext ac = null;
-	
 	@Before
-	public void initDB(){
+	public void initLdap(){
 		String basepath = new File("").getAbsolutePath();
 		String path = basepath + "/src/main/resources/applicationContext.xml";
 		ac = new FileSystemXmlApplicationContext(path);
-		jdbcTemplate = (JdbcTemplate) ac.getBean("jdbcTemplate");
+		ldapTemplate = (LdapTemplate) ac.getBean("ldapTemplate");
 	}
 	
 	@Test
-    public void testQuery() {  
-        String sql = "select * from  org_zh";  
-        SqlRowSet set = jdbcTemplate.queryForRowSet(sql);
-        System.out.println(set);
-    } 
+	public void getUser(){
+		
+	}
 }
