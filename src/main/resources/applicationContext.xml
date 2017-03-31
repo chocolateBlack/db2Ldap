@@ -49,7 +49,7 @@
     -->
     <bean class="org.springframework.ldap.samples.useradmin.domain.impl.GroupRepoImpl" />
     <bean class="org.springframework.ldap.samples.useradmin.domain.impl.DepartmentRepoImpl" />
-    <bean class="org.springframework.ldap.samples.useradmin.service.UserService">
+    <bean id="userService" class="org.springframework.ldap.samples.useradmin.service.UserService">
         <property name="directoryType" value="${sample.ldap.directory.type}" />
     </bean>
 

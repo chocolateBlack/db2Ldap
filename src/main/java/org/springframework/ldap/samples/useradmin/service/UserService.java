@@ -62,6 +62,10 @@ public class UserService implements BaseLdapNameAware {
     public void setBaseLdapPath(LdapName baseLdapPath) {
         this.baseLdapPath = baseLdapPath;
     }
+    
+    public LdapName getLdapPath(){
+    	return this.baseLdapPath;
+    }
 
     public Iterable<User> findAll() {
         return userRepo.findAll();
