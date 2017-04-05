@@ -16,36 +16,48 @@
 
 package org.springframework.ldap.samples.useradmin.service;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+import javax.naming.Name;
+import javax.naming.ldap.LdapName;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ldap.core.support.BaseLdapNameAware;
 import org.springframework.ldap.samples.useradmin.domain.DirectoryType;
 import org.springframework.ldap.samples.useradmin.domain.Group;
 import org.springframework.ldap.samples.useradmin.domain.GroupRepo;
+import org.springframework.ldap.samples.useradmin.domain.JWUser;
+import org.springframework.ldap.samples.useradmin.domain.JWUserRepo;
 import org.springframework.ldap.samples.useradmin.domain.User;
 import org.springframework.ldap.samples.useradmin.domain.UserRepo;
 import org.springframework.ldap.support.LdapNameBuilder;
 import org.springframework.ldap.support.LdapUtils;
 
-import javax.naming.Name;
-import javax.naming.ldap.LdapName;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 
 /**
  * @author Mattias Hellborg Arthursson
  */
 public class UserService implements BaseLdapNameAware {
     private final UserRepo userRepo;
+    private JWUserRepo jwUserRepo;
     private final GroupRepo groupRepo;
     private LdapName baseLdapPath;
     private DirectoryType directoryType;
 
-    @Autowired
+/*    @Autowired
     public UserService(UserRepo userRepo, GroupRepo groupRepo) {
+        this.userRepo = userRepo;
+        this.groupRepo = groupRepo;
+    }*/
+    
+    @Autowired
+    public UserService(JWUserRepo jwUserRepo, UserRepo userRepo, GroupRepo groupRepo) {
+    	this.jwUserRepo = jwUserRepo;
         this.userRepo = userRepo;
         this.groupRepo = groupRepo;
     }
@@ -86,6 +98,18 @@ public class UserService implements BaseLdapNameAware {
 
         return savedUser;
     }
+    
+    public JWUser createUser(JWUser user) {
+    	JWUser savedUser = jwUserRepo.save(user);
+
+        Group userGroup = getUserGroup();
+        // The DN the member attribute must be absolute
+        userGroup.addMember(toAbsoluteDn(savedUser.getId()));
+        groupRepo.save(userGroup);
+
+        return savedUser;
+    }
+
 
     public LdapName toAbsoluteDn(Name relativeName) {
         return LdapNameBuilder.newInstance(baseLdapPath)

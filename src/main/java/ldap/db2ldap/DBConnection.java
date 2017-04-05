@@ -16,4 +16,10 @@ public class DBConnection
         SqlRowSet set = jdbcTemplate.queryForRowSet(sql);
         return set;
     } 
+	
+    public SqlRowSet getBaseDepartment() {  
+        String sql = "select * from org_zh where 上级编码='1' and 机构类型='部门'";  
+        SqlRowSet set = jdbcTemplate.queryForRowSet(sql);
+        return set;
+    } 
 }
