@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.samples.useradmin.domain.JWUser;
+import org.springframework.ldap.samples.useradmin.domain.User;
 import org.springframework.ldap.samples.useradmin.service.UserService;
 import org.springframework.ldap.support.LdapUtils;
 import org.springframework.ldap.test.LdapTestUtils;
@@ -35,29 +36,18 @@ public class LdapTest {
 	public void createUser(){
     	JWUser user = new JWUser();
 		user.setEmail("123@126.com");
-		user.setEmployeeNumber(111);
+		user.setEmployeeNumber("123");
 		user.setFirstName("firstName");
 		user.setLastName("lastName");
-		user.setPhone("123");
+//		user.setPhone("123");
 		user.setTitle("title");
-		user.setFullName("中文名");
+		user.setFullName("鞠光辉");
+		user.setUid("ZH201703019");
+		user.setUserPassword("c9c4c39a6ce3413ed32214ba89c1e777");
 		System.out.println(userService.getLdapPath());
-		userService.createUser(user);
+		userService.createJWUser(user);
 	}
     
-    @Test 
-    public void AddUser(){
-    	JWUser user = new JWUser();
-		user.setEmail("123@126.com");
-		user.setEmployeeNumber(111);
-		user.setFirstName("firstName");
-		user.setLastName("lastName");
-		user.setPhone("123");
-		user.setTitle("title");
-		user.setFullName("中文名");
-		userService.createUser(user);
-    }
-	
     /**
      * 添加OU
      */
@@ -75,7 +65,13 @@ public class LdapTest {
 	
 	@Test
 	public void unbindOu(){
-		ldapTemplate.unbind("ou=IT");
+		ldapTemplate.unbind("cn=鞠光辉,ou=大数据平台研发工程师,ou=大数据平台部,ou=技术中心,ou=职能");
+	}
+	
+	@Test
+	public void search(){
+		User user = userService.findUser("cn=Jane Doe,ou=General,ou=Accounting,ou=Departments");
+		System.out.println(user.getEmail());
 	}
 	
 	/**

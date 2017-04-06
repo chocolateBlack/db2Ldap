@@ -15,6 +15,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.LdapTemplate;
+import org.springframework.ldap.samples.useradmin.domain.JWUser;
+import org.springframework.ldap.samples.useradmin.domain.User;
+import org.springframework.ldap.samples.useradmin.service.UserService;
 import org.springframework.ldap.support.LdapUtils;
 import org.springframework.ldap.test.LdapTestUtils;
 import org.springframework.test.context.ContextConfiguration;
@@ -34,14 +37,15 @@ public class InitOrgTest {
     
     @Autowired
     private ContextSource contextSource;
-    
-    Organization orgRoot = null;
+
+    @Autowired
+    private UserService userService;
     
     @Test
     public void test(){
     	initOrganization();
     	
-    	initPerson();
+//    	initPerson();
     }
 	
     public List<Organization> initOrgTree() {  
@@ -81,7 +85,17 @@ public class InitOrgTest {
 	
     
     private void initPerson() {
-		// TODO Auto-generated method stub
+        String sql = "select 部门,岗位,姓名,用户名,员工号,邮箱,密码,修改日期from org_zh";  
+        SqlRowSet set = jdbcTemplate.queryForRowSet(sql);
+        List<Organization> list = new ArrayList<Organization>();
+        
+        while(set.next()){
+        	String orgCode = set.getString(1);
+        	String orgName = set.getString(2);
+        	String orgParentCode = set.getString(3);
+        	String orgType = set.getString(4);
+        	list.add( new Organization(orgCode,orgName,orgParentCode, orgType));
+        }
 		
 	}
     
@@ -90,6 +104,7 @@ public class InitOrgTest {
      * @return
      */
     public List<Organization> getOrgTree(String orgId) {  
+    	Organization orgRoot = null;
     	List<Organization> list = new ArrayList<Organization>();
     	
     	StringBuilder sb = new StringBuilder();
@@ -199,10 +214,44 @@ public class InitOrgTest {
 	}
 	
 	/**
-	 * test add person
+	 * 测试批量初始化添加用户
 	 */
 	@Test
 	public void addPerson(){
+		StringBuilder sb = new StringBuilder();
+		sb.append("select [部门],[岗位],[姓名],[用户名],[员工号],[邮箱],[密码], from hr_zh LEFT JOIN org_zh on hr_zh.[岗位] = org_zh.[机构编码] where 机构类型='岗位'");
+		SqlRowSet set = jdbcTemplate.queryForRowSet(sb.toString());
+		List<JWUser> userList = new ArrayList<JWUser>();
 		
+		while(set.next()){
+			String dep = set.getString(1);
+			String postid = set.getString(2);//岗位ID
+			String name = set.getString(3);
+			String username = set.getString(4);
+			String userId = set.getString(5);
+			String email = set.getString(6);
+			String pwd = set.getString(7);
+			
+	    	JWUser user = new JWUser();
+			user.setEmail(email);
+			user.setEmployeeNumber(userId);
+			user.setFirstName("firstName");// TODO 查看那个objectclass包含这个内容
+			user.setLastName("lastName");
+//			user.setPhone("123");
+			user.setTitle(postid);
+			user.setFullName(name);
+			user.setUid(username);
+			user.setUserPassword(pwd);
+			
+			userList.add(user);
+		}
+
+		userService.createJWUser(userList);// 批量添加jwuser
+	}
+	
+	@Test
+	public void searchPerson(){
+		User user = userService.findUser("cn=鞠光辉,ou=大数据平台研发工程师,ou=大数据平台部,ou=技术中心,ou=职能");
+		System.out.println(user.getEmail());
 	}
 }
