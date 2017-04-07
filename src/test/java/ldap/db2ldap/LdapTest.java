@@ -35,9 +35,9 @@ public class LdapTest {
     @Test
 	public void createUser(){
     	JWUser user = new JWUser();
+    	user.setId("cn=jgh,ou=大数据平台研发工程师,ou=大数据平台部,ou=技术中心,ou=职能");
 		user.setEmail("123@126.com");
 		user.setEmployeeNumber("123");
-		user.setFirstName("firstName");
 		user.setLastName("lastName");
 //		user.setPhone("123");
 		user.setTitle("title");

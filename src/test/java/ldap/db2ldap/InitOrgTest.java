@@ -83,9 +83,8 @@ public class InitOrgTest {
         return list;
     } 
 	
-    
     private void initPerson() {
-        String sql = "select 部门,岗位,姓名,用户名,员工号,邮箱,密码,修改日期from org_zh";  
+        String sql = "select 部门,岗位,姓名,用户名,员工号,邮箱,密码,修改日期 from org_zh";
         SqlRowSet set = jdbcTemplate.queryForRowSet(sql);
         List<Organization> list = new ArrayList<Organization>();
         
@@ -96,7 +95,6 @@ public class InitOrgTest {
         	String orgType = set.getString(4);
         	list.add( new Organization(orgCode,orgName,orgParentCode, orgType));
         }
-		
 	}
     
     /**
@@ -121,7 +119,7 @@ public class InitOrgTest {
     	sb.append(" )");
     	sb.append(" select * from  CTE;");
 
-        SqlRowSet set = jdbcTemplate.queryForRowSet(sb.toString(), new String[]{orgId});
+        SqlRowSet set = jdbcTemplate.queryForRowSet(sb.toString(), new Object[]{orgId});
         
         int i = 0;
         while(set.next()){
@@ -152,8 +150,8 @@ public class InitOrgTest {
         return list;
     } 
     
-    private void getChild(Organization OrgRoot){
-    	 for(Organization org : OrgRoot.getChildren()){
+    private void getChild(Organization orgRoot){
+    	 for(Organization org : orgRoot.getChildren()){
          	System.out.println(org.getOrgName() + "--" + org.getDn());
          	if(org.getOrgType().equals("部门")){//有子节点
          		getChild(org);
@@ -235,7 +233,6 @@ public class InitOrgTest {
 	    	JWUser user = new JWUser();
 			user.setEmail(email);
 			user.setEmployeeNumber(userId);
-			user.setFirstName("firstName");// TODO 查看那个objectclass包含这个内容
 			user.setLastName("lastName");
 //			user.setPhone("123");
 			user.setTitle(postid);
