@@ -8,6 +8,7 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.BasicAttributes;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,8 +44,10 @@ public class InitOrgTest {
     
     @Test
     public void test(){
-    	initOrganization();
+    	List<Organization> depList = initOrgTree();
+    	initOrganization(depList);
     	
+    	addPerson(positionList);
 //    	initPerson();
     }
 	
@@ -59,7 +62,7 @@ public class InitOrgTest {
         	String orgName = set.getString(2);
         	String orgParentCode = set.getString(3);
         	String orgType = set.getString(4);
-        	list.add(new Organization(orgCode,orgName,orgParentCode, orgType));
+        	list.add(new Organization(orgCode, orgName, orgParentCode, orgType));
         }
         return list;
     } 
@@ -97,6 +100,8 @@ public class InitOrgTest {
         }
 	}
     
+    List<Organization> positionList = new ArrayList<Organization>();//只存储  机构类型=岗位 的org
+    
     /**
      * 构造 Org Tree，以公司以下业务部门开始查询作为根目录。不采用公司级别作为根目录减轻SQL对DB递归查询风险
      * @return
@@ -133,6 +138,9 @@ public class InitOrgTest {
         	} else {
         		Organization org = new Organization(orgCode, orgName, orgParentCode, orgType);
         		list.add(org);
+        		if("岗位".equals(org.getOrgType())){
+        			positionList.add(org);
+        		}
         	}
         	i++;
         }
@@ -182,9 +190,7 @@ public class InitOrgTest {
     
     
     @Test
-    public void initOrganization(){
-    	List<Organization> depList = initOrgTree();
-    	
+    public void initOrganization(List<Organization> depList){
     	Attributes attr = new BasicAttributes(); 
 		BasicAttribute ocattr = new BasicAttribute("objectclass");
 		ocattr.add("organizationalUnit");
@@ -215,7 +221,7 @@ public class InitOrgTest {
 	 * 测试批量初始化添加用户
 	 */
 	@Test
-	public void addPerson(){
+	public void addPerson(List<Organization> orgList){
 		StringBuilder sb = new StringBuilder();
 		sb.append("select [部门],[岗位],[姓名],[用户名],[员工号],[邮箱],[密码], from hr_zh LEFT JOIN org_zh on hr_zh.[岗位] = org_zh.[机构编码] where 机构类型='岗位'");
 		SqlRowSet set = jdbcTemplate.queryForRowSet(sb.toString());
@@ -231,18 +237,23 @@ public class InitOrgTest {
 			String pwd = set.getString(7);
 			
 	    	JWUser user = new JWUser();
+	    	for(Organization org: orgList){
+	    		if(org.getOrgCode().equals(postid)){
+	    			user.setId("cn=" + username + ", " +org.getDn());
+	    		}
+	    	}
 			user.setEmail(email);
 			user.setEmployeeNumber(userId);
 			user.setLastName("lastName");
 //			user.setPhone("123");
 			user.setTitle(postid);
-			user.setFullName(name);
+//			user.setFullName(name);
 			user.setUid(username);
 			user.setUserPassword(pwd);
 			
 			userList.add(user);
 		}
-
+		
 		userService.createJWUser(userList);// 批量添加jwuser
 	}
 	

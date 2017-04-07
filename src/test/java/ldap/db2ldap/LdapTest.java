@@ -35,24 +35,23 @@ public class LdapTest {
     @Test
 	public void createUser(){
     	JWUser user = new JWUser();
-    	user.setId("cn=jgh,ou=大数据平台研发工程师,ou=大数据平台部,ou=技术中心,ou=职能");
+    	user.setId("cn=12312, ou=慧通事业部,ou=业务");
 		user.setEmail("123@126.com");
 		user.setEmployeeNumber("123");
 		user.setLastName("lastName");
-//		user.setPhone("123");
+		user.setPhone("123");
 		user.setTitle("title");
-		user.setFullName("鞠光辉");
 		user.setUid("ZH201703019");
 		user.setUserPassword("c9c4c39a6ce3413ed32214ba89c1e777");
-		System.out.println(userService.getLdapPath());
 		userService.createJWUser(user);
+//		ldapTemplate.create(user);
 	}
     
     /**
      * 添加OU
      */
 	@Test
-	public void createOu(){
+	public void createNode(){
 		Attributes attr = new BasicAttributes(); 
 		BasicAttribute ocattr = new BasicAttribute("objectclass");
 		ocattr.add("organizationalUnit");
@@ -60,12 +59,34 @@ public class LdapTest {
 		attr.put(ocattr);
 		
 //		ldapTemplate.bind("ou=IT", null, attr);// buildDN() function
-		ldapTemplate.bind("ou=PMS集团直连组, ou=产品组, ou=产品与研发部, ou=慧通事业部, ou=业务", null, attr);
+		ldapTemplate.bind("ou=业务", null, attr);
+		ldapTemplate.bind("ou=慧通事业部, ou=业务", null, attr);
 	}
+	
+    /**
+     * 添加User
+     */
+	@Test
+	public void createU(){
+//		@Entry(objectClasses = { "inetOrgPerson", "organizationalPerson", "person", "top", "shadowAccount" })
+		Attributes attr = new BasicAttributes(); 
+		BasicAttribute ocattr = new BasicAttribute("objectclass");
+		ocattr.add("top");
+		ocattr.add("organizationalPerson");
+		ocattr.add("shadowAccount");
+		attr.put(ocattr);
+		attr.put("userPassword", "12");
+		attr.put("sn", "12");
+		attr.put("uid", "12");
+		
+//		ldapTemplate.bind("ou=IT", null, attr);// buildDN() function
+		ldapTemplate.bind("cn=jg2h1,ou=慧通事业部, ou=业务", null, attr);
+	}
+	
 	
 	@Test
 	public void unbindOu(){
-		ldapTemplate.unbind("cn=鞠光辉,ou=大数据平台研发工程师,ou=大数据平台部,ou=技术中心,ou=职能");
+		ldapTemplate.unbind("cn=鞠光辉");
 	}
 	
 	@Test
