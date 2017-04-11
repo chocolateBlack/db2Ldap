@@ -1,5 +1,7 @@
 package ldap.db2ldap;
 
+import java.util.ArrayList;
+
 import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
@@ -49,6 +51,20 @@ public class LdapTest {
 		user.setTitle("title");
 		user.setUid("ZH201703019");
 		user.setUserPassword("c9c4c39a6ce3413ed32214ba89c1e777");
+		
+		
+    	JWUser user1 = new JWUser();
+    	user1.setId("cn=122312, ou=慧通事业部, ou=业务");
+		user1.setEmail("123@126.com");
+		user1.setEmployeeNumber("123");
+		user1.setLastName("lastName");
+		user1.setPhone("123");
+		user1.setTitle("title");
+		user1.setUid("ZH201703019");
+		user1.setUserPassword("c9c4c39a6ce3413ed32214ba89c1e777");
+		
+		ArrayList<JWUser> list = new ArrayList<JWUser>();
+		list.add(user);
 		userService.createJWUser(user);
 //		ldapTemplate.create(user);
 	}

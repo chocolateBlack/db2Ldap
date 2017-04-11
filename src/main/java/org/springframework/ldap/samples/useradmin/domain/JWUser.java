@@ -36,7 +36,7 @@ public final class JWUser implements Persistable<Name>{
     private Name id;
     
     @Attribute(name = "cn")
-    @DnAttribute(value="cn", index=1)
+    @DnAttribute(value="cn")
     private String fullName;
 
     @Attribute(name = "employeeNumber")
@@ -60,7 +60,7 @@ public final class JWUser implements Persistable<Name>{
     @Attribute(name = "userPassword")
     private String userPassword;
     
-
+    @Override
     public Name getId() {
         return id;
     }

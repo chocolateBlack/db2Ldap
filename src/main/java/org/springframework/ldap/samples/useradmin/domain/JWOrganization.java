@@ -57,9 +57,6 @@ public final class JWOrganization implements Persistable<Name>{
 	public JWOrganization() {
 		// TODO Auto-generated constructor stub
 	}
-	public Name getId() {
-        return id;
-    }
 
     public void setId(Name id) {
         this.id = id;
@@ -107,9 +104,16 @@ public final class JWOrganization implements Persistable<Name>{
 	public void setFullName(String fullName) {
 		this.fullName = fullName;
 	}
+	
 	@Override
 	public boolean isNew() {
+//		Serializable id = getId();
+//		return id == null || StringUtils.isBlank(String.valueOf(id));
 		return true;
+	}
+	@Override
+	public Name getId() {
+		return this.id;
 	}
 	
 }

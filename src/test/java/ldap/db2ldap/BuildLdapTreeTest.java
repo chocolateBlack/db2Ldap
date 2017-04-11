@@ -15,6 +15,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
+import org.springframework.ldap.NameAlreadyBoundException;
 import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.samples.useradmin.domain.JWOrganization;
@@ -170,7 +171,7 @@ public class BuildLdapTreeTest {
 	private void addChild(JWOrganization father, List<JWOrganization> list) {
 		for (JWOrganization org : list) {
 			if (org.getOrgParentCode().equals(father.getOrgCode())) {// 是father的子节点
-				if (org.getOrgType().equals("部门")) {
+/*				if (org.getOrgType().equals("部门")) {
 					org.setId(LdapUtils.prepend(LdapUtils.newLdapName("ou="
 							+ StringUtils.replace(org.getOrgName(), "/", "")),
 							father.getId()));
@@ -178,13 +179,18 @@ public class BuildLdapTreeTest {
 					org.setId(LdapUtils.prepend(LdapUtils.newLdapName("ou="
 							+ StringUtils.replace(org.getOrgCode(), "/", "")),
 							father.getId()));
-				}
+				}*/
 				
+				org.setId(LdapUtils.prepend(LdapUtils.newLdapName("ou="
+						+ StringUtils.replace(org.getOrgName(), "/", "")),
+						father.getId()));
 				father.getChildren().add(org);
 				try {
 					orgService.createJWOrg(org);
+				} catch (NameAlreadyBoundException e1) {
+					e1.printStackTrace();
 				} catch (Exception e) {
-					// TODO: handle exception
+					e.printStackTrace();
 				}
 				
 				if (org.getOrgType().equals("部门")) {
@@ -200,11 +206,7 @@ public class BuildLdapTreeTest {
 	@Test
 	public void clear() {
 		try {
-			// LdapTestUtils.clearSubContexts(contextSource,
-			// LdapUtils.emptyLdapName());
-
 			Name name = LdapUtils.emptyLdapName();
-
 			DirContext ctx = null;
 			try {
 				ctx = contextSource.getReadWriteContext();
@@ -239,8 +241,6 @@ public class BuildLdapTreeTest {
 				}
 			}
 		} catch (NamingException e) {
-			// LOGGER.debug("Error cleaning sub-contexts", e);
-			// System.out.println();
 			e.printStackTrace();
 		} finally {
 			try {
@@ -257,7 +257,7 @@ public class BuildLdapTreeTest {
 	// @Test
 	public void addPerson(List<JWOrganization> orgList) {
 		StringBuilder sb = new StringBuilder();
-		sb.append("select [部门],[岗位],[姓名],[用户名],[员工号],[邮箱],[密码] from hr_zh LEFT JOIN org_zh on hr_zh.[岗位] = org_zh.[机构编码] where 机构类型='岗位'");
+		sb.append("select [部门],[岗位],[姓名],[用户名],[员工号],[邮箱],[密码] from hr_zh LEFT JOIN org_zh on hr_zh.[岗位] = org_zh.[机构编码] where 机构类型='岗位' and [密码] is not null");
 		SqlRowSet set = jdbcTemplate.queryForRowSet(sb.toString());
 		List<JWUser> userList = new ArrayList<JWUser>();
 		System.out.println("orgList大小:" + orgList.size());
@@ -270,31 +270,23 @@ public class BuildLdapTreeTest {
 			String email = set.getString(6);
 			String pwd = set.getString(7);
 			
-			if(name.equals("李敏")){
-				System.out.println("----------------");
-				System.out.println("----------------");
-			}
-			
 			JWUser user = new JWUser();
 			for (JWOrganization org : orgList) {
 				if (org.getOrgCode().equals(postid)) {
-					user.setId(LdapUtils.prepend(
-							LdapUtils.newLdapName("cn=" + StringUtils.replace(username, "/", "")), org.getId()));
+					user.setId(LdapUtils.prepend(LdapUtils.newLdapName("cn=" + StringUtils.replace(username, "/", "")), org.getId()));
 					System.out.println(LdapUtils.newLdapName(user.getId()));
+					user.setTitle(org.getOrgName());
 				}
 			}
 			user.setEmail(email);
 			user.setEmployeeNumber(userId);
 			user.setLastName(name);
-			// user.setPhone("123");
-			user.setTitle(postid);
-			// user.setFullName(name);
 			user.setUid(username);
 			user.setUserPassword(pwd);
 			userService.createJWUser(user);
 			userList.add(user);
 		}
-//		userService.createJWUser(userList);// 批量添加jwuser
+		userService.createJWUser(userList);// 批量添加jwuser
 	}
 
 	@Test
