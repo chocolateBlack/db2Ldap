@@ -49,12 +49,6 @@ public class UserService implements BaseLdapNameAware {
     private LdapName baseLdapPath;
     private DirectoryType directoryType;
 
-/*    @Autowired
-    public UserService(UserRepo userRepo, GroupRepo groupRepo) {
-        this.userRepo = userRepo;
-        this.groupRepo = groupRepo;
-    }*/
-    
     @Autowired
     public UserService(JWUserRepo jwUserRepo, UserRepo userRepo, GroupRepo groupRepo) {
     	this.jwUserRepo = jwUserRepo;
@@ -83,6 +77,10 @@ public class UserService implements BaseLdapNameAware {
         return userRepo.findAll();
     }
 
+    public JWUser findJWUser(String userId) {
+        return jwUserRepo.findOne(LdapUtils.newLdapName(userId));
+    }
+    
     public User findUser(String userId) {
         return userRepo.findOne(LdapUtils.newLdapName(userId));
     }
@@ -99,15 +97,14 @@ public class UserService implements BaseLdapNameAware {
         return savedUser;
     }
     
-    public JWUser createUser(JWUser user) {
-    	JWUser savedUser = jwUserRepo.save(user);
-
-        Group userGroup = getUserGroup();
-        // The DN the member attribute must be absolute
-        userGroup.addMember(toAbsoluteDn(savedUser.getId()));
-        groupRepo.save(userGroup);
-
-        return savedUser;
+    public Iterable<JWUser> createJWUser(List<JWUser> userList) {
+    	Iterable<JWUser> list = jwUserRepo.save(userList);
+        return list;
+    }
+    
+    public JWUser createJWUser(JWUser user) {
+    	JWUser jwuser = jwUserRepo.save(user);
+        return jwuser;
     }
 
 

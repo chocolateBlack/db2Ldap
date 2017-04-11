@@ -16,32 +16,31 @@
 
 package org.springframework.ldap.samples.useradmin.domain;
 
+import javax.naming.Name;
+
+import org.springframework.data.domain.Persistable;
 import org.springframework.ldap.odm.annotations.Attribute;
 import org.springframework.ldap.odm.annotations.DnAttribute;
 import org.springframework.ldap.odm.annotations.Entry;
 import org.springframework.ldap.odm.annotations.Id;
-import org.springframework.ldap.odm.annotations.Transient;
 import org.springframework.ldap.support.LdapUtils;
-
-import javax.naming.Name;
 
 /**
  * @author Mattias Hellborg Arthursson
  */
-@Entry(objectClasses = { "inetOrgPerson", "organizationalPerson", "person", "top" }, base = "ou=Departments")
-public final class User {
+@Entry(objectClasses = { "inetOrgPerson", "organizationalPerson", "person", "top", "shadowAccount" })
+public final class JWUser implements Persistable<Name>{
+	private static final long serialVersionUID = 1L;
+
     @Id
     private Name id;
-
+    
     @Attribute(name = "cn")
-    @DnAttribute(value="cn", index=3)
+    @DnAttribute(value="cn", index=1)
     private String fullName;
 
     @Attribute(name = "employeeNumber")
-    private int employeeNumber;
-
-    @Attribute(name = "givenName")
-    private String firstName;
+    private String employeeNumber;
 
     @Attribute(name = "sn")
     private String lastName;
@@ -54,30 +53,13 @@ public final class User {
 
     @Attribute(name = "telephoneNumber")
     private String phone;
-
-    @DnAttribute(value="ou", index=2)
-    @Transient
-    private String unit;
-
-    @DnAttribute(value="ou", index=1)
-    @Transient
-    private String department;
-
-    public String getUnit() {
-        return unit;
-    }
-
-    public void setUnit(String unit) {
-        this.unit = unit;
-    }
-
-    public String getDepartment() {
-        return department;
-    }
-
-    public void setDepartment(String department) {
-        this.department = department;
-    }
+    
+    @Attribute(name = "uid")
+    private String uid;
+    
+    @Attribute(name = "userPassword")
+    private String userPassword;
+    
 
     public Name getId() {
         return id;
@@ -99,20 +81,12 @@ public final class User {
         this.email = email;
     }
 
-    public int getEmployeeNumber() {
+    public String getEmployeeNumber() {
         return employeeNumber;
     }
 
-    public void setEmployeeNumber(int employeeNumber) {
+    public void setEmployeeNumber(String employeeNumber) {
         this.employeeNumber = employeeNumber;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
     }
 
     public String getFullName() {
@@ -147,12 +121,28 @@ public final class User {
         this.title = title;
     }
 
-    @Override
+    public String getUid() {
+		return uid;
+	}
+
+	public void setUid(String uid) {
+		this.uid = uid;
+	}
+
+	public String getUserPassword() {
+		return userPassword;
+	}
+
+	public void setUserPassword(String userPassword) {
+		this.userPassword = userPassword;
+	}
+
+	@Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        User user = (User) o;
+        JWUser user = (JWUser) o;
 
         if (id != null ? !id.equals(user.id) : user.id != null) return false;
 
@@ -163,4 +153,9 @@ public final class User {
     public int hashCode() {
         return id != null ? id.hashCode() : 0;
     }
+
+	@Override
+	public boolean isNew() {
+		return true;
+	}
 }

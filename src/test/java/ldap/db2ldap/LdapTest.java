@@ -10,8 +10,10 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.LdapTemplate;
+import org.springframework.ldap.samples.useradmin.domain.JWOrganization;
 import org.springframework.ldap.samples.useradmin.domain.JWUser;
 import org.springframework.ldap.samples.useradmin.domain.User;
+import org.springframework.ldap.samples.useradmin.service.OrganizationService;
 import org.springframework.ldap.samples.useradmin.service.UserService;
 import org.springframework.ldap.support.LdapUtils;
 import org.springframework.ldap.test.LdapTestUtils;
@@ -23,19 +25,23 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 })
 
 public class LdapTest {
-    @Autowired
+
+	@Autowired
     private UserService userService;
+	
+	@Autowired
+	private OrganizationService orgService;
     
     @Autowired
     private LdapTemplate ldapTemplate;
     
     @Autowired
     private ContextSource contextSource;
-
+    
     @Test
 	public void createUser(){
     	JWUser user = new JWUser();
-    	user.setId("cn=12312, ou=慧通事业部,ou=业务");
+    	user.setId("cn=12312, ou=慧通事业部, ou=业务");
 		user.setEmail("123@126.com");
 		user.setEmployeeNumber("123");
 		user.setLastName("lastName");
@@ -45,6 +51,14 @@ public class LdapTest {
 		user.setUserPassword("c9c4c39a6ce3413ed32214ba89c1e777");
 		userService.createJWUser(user);
 //		ldapTemplate.create(user);
+	}
+    @Test
+	public void createOrganization(){
+    	JWOrganization org = new JWOrganization();
+    	org.setId("ou=1, ou=慧通事业部, ou=业务");
+    	orgService.createJWOrg(org);
+//		ldapTemplate.create(org);
+//		userService.createJWUser(user);
 	}
     
     /**
@@ -80,18 +94,18 @@ public class LdapTest {
 		attr.put("uid", "12");
 		
 //		ldapTemplate.bind("ou=IT", null, attr);// buildDN() function
-		ldapTemplate.bind("cn=jg2h1,ou=慧通事业部, ou=业务", null, attr);
+		ldapTemplate.bind("cn=jg2h1,ou=慧通事业部,ou=慧通事业部, ou=业务", null, attr);
 	}
 	
 	
 	@Test
 	public void unbindOu(){
-		ldapTemplate.unbind("cn=鞠光辉");
+		ldapTemplate.unbind("ou=产品部,ou=慧通事业部,ou=业务");
 	}
 	
 	@Test
 	public void search(){
-		User user = userService.findUser("cn=Jane Doe,ou=General,ou=Accounting,ou=Departments");
+		User user = userService.findUser("ou=产品部,ou=慧通事业部,ou=业务");
 		System.out.println(user.getEmail());
 	}
 	
@@ -106,4 +120,5 @@ public class LdapTest {
 			e.printStackTrace();
 		}
 	}
+    
 }

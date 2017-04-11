@@ -8,7 +8,6 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.BasicAttributes;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,8 +43,8 @@ public class InitOrgTest {
     
     @Test
     public void test(){
-    	List<Organization> depList = initOrgTree();
-    	initOrganization(depList);
+//    	List<Organization> depList = initOrgTree();
+//    	initOrganization(depList);
     	
     	addPerson(positionList);
 //    	initPerson();
@@ -189,7 +188,7 @@ public class InitOrgTest {
     }
     
     
-    @Test
+//    @Test
     public void initOrganization(List<Organization> depList){
     	Attributes attr = new BasicAttributes(); 
 		BasicAttribute ocattr = new BasicAttribute("objectclass");
@@ -220,10 +219,9 @@ public class InitOrgTest {
 	/**
 	 * 测试批量初始化添加用户
 	 */
-	@Test
 	public void addPerson(List<Organization> orgList){
 		StringBuilder sb = new StringBuilder();
-		sb.append("select [部门],[岗位],[姓名],[用户名],[员工号],[邮箱],[密码], from hr_zh LEFT JOIN org_zh on hr_zh.[岗位] = org_zh.[机构编码] where 机构类型='岗位'");
+		sb.append("select [部门],[岗位],[姓名],[用户名],[员工号],[邮箱],[密码]  from hr_zh LEFT JOIN org_zh on hr_zh.[岗位] = org_zh.[机构编码] where 机构类型='岗位'");
 		SqlRowSet set = jdbcTemplate.queryForRowSet(sb.toString());
 		List<JWUser> userList = new ArrayList<JWUser>();
 		

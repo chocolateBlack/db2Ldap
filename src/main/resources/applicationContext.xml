@@ -52,6 +52,9 @@
     <bean id="userService" class="org.springframework.ldap.samples.useradmin.service.UserService">
         <property name="directoryType" value="${sample.ldap.directory.type}" />
     </bean>
+    <bean id="orgService" class="org.springframework.ldap.samples.useradmin.service.OrganizationService">
+        <property name="directoryType" value="${sample.ldap.directory.type}" />
+    </bean>
 
     <!-- Required to make sure BaseLdapName is populated in UserService -->
     <bean class="org.springframework.ldap.core.support.BaseLdapPathBeanPostProcessor" />
