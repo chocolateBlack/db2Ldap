@@ -10,6 +10,8 @@ import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,8 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.ldap.NameAlreadyBoundException;
 import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.LdapTemplate;
+import org.springframework.ldap.filter.AndFilter;
+import org.springframework.ldap.filter.EqualsFilter;
 import org.springframework.ldap.samples.useradmin.domain.JWOrganization;
 import org.springframework.ldap.samples.useradmin.domain.JWUser;
 import org.springframework.ldap.samples.useradmin.domain.User;
@@ -31,6 +35,8 @@ import org.springframework.util.StringUtils;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:applicationContext.xml" })
 public class BuildLdapTreeTest {
+	protected static final Log log = LogFactory.getLog(BuildLdapTreeTest.class);
+	
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
 
@@ -45,6 +51,9 @@ public class BuildLdapTreeTest {
 
 	@Autowired
 	private OrganizationService orgService;
+	
+//	@Autowired
+//	private UserAuthenticationProvider userAuthProvider;
 
 	@Test
 	public void test() {
@@ -88,17 +97,17 @@ public class BuildLdapTreeTest {
 		return list;
 	}
 
-	private void initPerson() {
-		String sql = "select 部门,岗位,姓名,用户名,员工号,邮箱,密码,修改日期 from org_zh";
+	private void updatePerson() {
+		String sql = "select [部门],[岗位],[姓名],[用户名],[员工号],[邮箱],[密码],[修改时间] from hr_zh LEFT JOIN org_zh on hr_zh.[岗位] = org_zh.[机构编码] where 机构类型='岗位' and [密码] is not null and CONVERT(varchar(100), [修改时间], 23) = CONVERT(varchar(100), getdate()-1, 23)";
 		SqlRowSet set = jdbcTemplate.queryForRowSet(sql);
-		List<Organization> list = new ArrayList<Organization>();
+		List<JWOrganization> list = new ArrayList<JWOrganization>();
 
 		while (set.next()) {
 			String orgCode = set.getString(1);
 			String orgName = set.getString(2);
 			String orgParentCode = set.getString(3);
 			String orgType = set.getString(4);
-			list.add(new Organization(orgCode, orgName, orgParentCode, orgType));
+			list.add(new JWOrganization(orgCode, orgName, orgParentCode, orgType));
 		}
 	}
 
@@ -155,32 +164,12 @@ public class BuildLdapTreeTest {
 		}
 
 		addChild(orgRoot, list);// 生成组织树
-
-		// Attributes attr = new BasicAttributes();
-		// BasicAttribute ocattr = new BasicAttribute("objectclass");
-		// ocattr.add("organizationalUnit");
-		// ocattr.add("top");
-		// attr.put(ocattr);
-
-		// addLdapOrganization(attr, orgRoot);
-		// orgService.createJWOrg(orgList);
-
 		return orgRoot;
 	}
 
 	private void addChild(JWOrganization father, List<JWOrganization> list) {
 		for (JWOrganization org : list) {
 			if (org.getOrgParentCode().equals(father.getOrgCode())) {// 是father的子节点
-/*				if (org.getOrgType().equals("部门")) {
-					org.setId(LdapUtils.prepend(LdapUtils.newLdapName("ou="
-							+ StringUtils.replace(org.getOrgName(), "/", "")),
-							father.getId()));
-				} else if(org.getOrgType().equals("岗位")){//采用orgCode作为ou的value，解决同一部门下两个同名岗位的情况
-					org.setId(LdapUtils.prepend(LdapUtils.newLdapName("ou="
-							+ StringUtils.replace(org.getOrgCode(), "/", "")),
-							father.getId()));
-				}*/
-				
 				org.setId(LdapUtils.prepend(LdapUtils.newLdapName("ou="
 						+ StringUtils.replace(org.getOrgName(), "/", "")),
 						father.getId()));
@@ -259,7 +248,7 @@ public class BuildLdapTreeTest {
 		StringBuilder sb = new StringBuilder();
 		sb.append("select [部门],[岗位],[姓名],[用户名],[员工号],[邮箱],[密码] from hr_zh LEFT JOIN org_zh on hr_zh.[岗位] = org_zh.[机构编码] where 机构类型='岗位' and [密码] is not null");
 		SqlRowSet set = jdbcTemplate.queryForRowSet(sb.toString());
-		List<JWUser> userList = new ArrayList<JWUser>();
+		
 		System.out.println("orgList大小:" + orgList.size());
 		while (set.next()) {
 			String dep = set.getString(1);
@@ -284,11 +273,24 @@ public class BuildLdapTreeTest {
 			user.setUid(username);
 			user.setUserPassword(pwd);
 			userService.createJWUser(user);
-			userList.add(user);
 		}
-		userService.createJWUser(userList);// 批量添加jwuser
+//		userService.createJWUser(userList);// 批量添加jwuser
 	}
 
+	
+//	@Test
+//	public void testKylinAuth() {
+//		UserAuthenticationProvider provider = userAuthProvider;
+//		UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("hadoop", "apU)u%7lk,-7o");
+//		log.info("provider: " + provider.getClass().getName());
+//		Authentication au = provider.authenticate(authentication);
+//		log.info(au);
+//		log.info(au.getCredentials());
+//		log.info(au.getPrincipal());
+//		log.info(au.getDetails());
+//	}
+//	
+	
 	@Test
 	public void searchPerson() {
 		User user = userService
@@ -300,5 +302,13 @@ public class BuildLdapTreeTest {
 	public void searchOrg() {
 		JWOrganization jwOrg = orgService.findJWOrg("ou=103020601,ou=管理层,ou=慧云事业部,ou=业务");
 		System.out.println(jwOrg.getFullName());
+	}
+	
+	@Test
+	public void authPerson(){
+		LdapTemplate lt = ldapTemplate;
+		AndFilter filter = new AndFilter();
+		filter.and(new EqualsFilter("cn", "ZH201506006"));
+		boolean b = lt.authenticate("", filter.toString(), "c9c4c39a6ce3413ed32214ba89c1e777");
 	}
 }
