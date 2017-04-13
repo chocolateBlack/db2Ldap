@@ -4,31 +4,28 @@ import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.BasicAttributes;
-import javax.naming.ldap.LdapName;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.LdapTemplate;
-import org.springframework.ldap.core.support.BaseLdapNameAware;
 import org.springframework.ldap.samples.useradmin.domain.Group;
 import org.springframework.ldap.samples.useradmin.domain.GroupRepo;
 import org.springframework.ldap.samples.useradmin.domain.JWOrganization;
 import org.springframework.ldap.samples.useradmin.domain.JWUser;
 import org.springframework.ldap.samples.useradmin.service.OrganizationService;
 import org.springframework.ldap.samples.useradmin.service.UserService;
-import org.springframework.ldap.support.LdapNameBuilder;
 import org.springframework.ldap.support.LdapUtils;
 import org.springframework.ldap.test.LdapTestUtils;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations={
     "classpath:applicationContext.xml"
 })
-
-public class LdapTest  implements BaseLdapNameAware {
+public class LdapTest {
 
 	@Autowired
     private UserService userService;
@@ -44,8 +41,6 @@ public class LdapTest  implements BaseLdapNameAware {
     
     @Autowired
     private GroupRepo groupRepo;
-    
-    private LdapName baseLdapPath;
     
     /**
      * 测试新增一个用户，并将该用户添加到某个Group中
@@ -83,7 +78,7 @@ public class LdapTest  implements BaseLdapNameAware {
 		attr.put("uid", "12");
 		
 //		ldapTemplate.bind("ou=IT", null, attr);// buildDN() function
-		ldapTemplate.bind("cn=jg2h1,ou=慧通事业部,ou=慧通事业部, ou=业务", null, attr);
+		ldapTemplate.bind("cn=jg2h1,ou=项目组,ou=事业部, ou=业务", null, attr);
 	}
     
     /**
@@ -107,7 +102,9 @@ public class LdapTest  implements BaseLdapNameAware {
 		ocattr.add("organizationalUnit");
 		ocattr.add("top");
 		attr.put(ocattr);
-		ldapTemplate.bind("ou=Group", null, attr);
+		ldapTemplate.bind("ou=业务", null, attr);
+		ldapTemplate.bind("ou=事业部, ou=业务", null, attr);
+		ldapTemplate.bind("ou=项目组,ou=事业部, ou=业务", null, attr);
 	}
 	
 	/**
@@ -151,9 +148,4 @@ public class LdapTest  implements BaseLdapNameAware {
 			e.printStackTrace();
 		}
 	}
-	@Override
-	public void setBaseLdapPath(LdapName baseLdapPath) {
-		this.baseLdapPath = baseLdapPath;
-	}
-    
 }

@@ -300,7 +300,7 @@ public class BuildLdapTreeTest {
 	
 	@Test
 	public void searchOrg() {
-		JWOrganization jwOrg = orgService.findJWOrg("ou=管理层,ou=慧云事业部,ou=业务");
+		JWOrganization jwOrg = orgService.findJWOrg("ou=管理层,ou=事业部,ou=业务");
 		System.out.println(jwOrg.getFullName());
 	}
 	
