@@ -16,7 +16,6 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.samples.useradmin.domain.JWUser;
-import org.springframework.ldap.samples.useradmin.domain.User;
 import org.springframework.ldap.samples.useradmin.service.UserService;
 import org.springframework.ldap.support.LdapUtils;
 import org.springframework.ldap.test.LdapTestUtils;
@@ -253,11 +252,5 @@ public class InitOrgTest {
 		}
 		
 		userService.createJWUser(userList);// 批量添加jwuser
-	}
-	
-	@Test
-	public void searchPerson(){
-		User user = userService.findUser("cn=鞠光辉,ou=大数据平台研发工程师,ou=大数据平台部,ou=技术中心,ou=职能");
-		System.out.println(user.getEmail());
 	}
 }

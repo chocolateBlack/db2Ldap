@@ -136,12 +136,6 @@ public class LdapTest  implements BaseLdapNameAware {
 		ldapTemplate.unbind("cn=ROLE_USER, ou=Group");
 	}
 	
-	@Test
-	public void search(){
-		User user = userService.findUser("ou=产品部,ou=慧通事业部,ou=业务");
-		System.out.println(user.getEmail());
-	}
-	
 	/**
 	 * clear ldap 
 	 */

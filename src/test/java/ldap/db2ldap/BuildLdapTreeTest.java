@@ -24,7 +24,6 @@ import org.springframework.ldap.filter.AndFilter;
 import org.springframework.ldap.filter.EqualsFilter;
 import org.springframework.ldap.samples.useradmin.domain.JWOrganization;
 import org.springframework.ldap.samples.useradmin.domain.JWUser;
-import org.springframework.ldap.samples.useradmin.domain.User;
 import org.springframework.ldap.samples.useradmin.service.OrganizationService;
 import org.springframework.ldap.samples.useradmin.service.UserService;
 import org.springframework.ldap.support.LdapUtils;
@@ -52,6 +51,10 @@ public class BuildLdapTreeTest {
 	@Autowired
 	private OrganizationService orgService;
 	
+	String allUserSQL = "select [部门],[岗位],[姓名],[用户名],[员工号],[邮箱],[密码] from hr_zh LEFT JOIN org_zh on hr_zh.[岗位] = org_zh.[机构编码] where 机构类型='岗位' and [密码] is not null";
+	
+	String updateUserSQL = allUserSQL + " and CONVERT(varchar(100), [修改时间], 23) = CONVERT(varchar(100), getdate()-1, 23)";
+	
 //	@Autowired
 //	private UserAuthenticationProvider userAuthProvider;
 
@@ -65,7 +68,7 @@ public class BuildLdapTreeTest {
 		}
 		System.out.println(System.currentTimeMillis());
 		// 人员
-		addPerson(positionList);
+		addPerson(positionList, true);
 		System.out.println(System.currentTimeMillis());
 		// initPerson();
 	}
@@ -97,24 +100,9 @@ public class BuildLdapTreeTest {
 		return list;
 	}
 
-	private void updatePerson() {
-		String sql = "select [部门],[岗位],[姓名],[用户名],[员工号],[邮箱],[密码],[修改时间] from hr_zh LEFT JOIN org_zh on hr_zh.[岗位] = org_zh.[机构编码] where 机构类型='岗位' and [密码] is not null and CONVERT(varchar(100), [修改时间], 23) = CONVERT(varchar(100), getdate()-1, 23)";
-		SqlRowSet set = jdbcTemplate.queryForRowSet(sql);
-		List<JWOrganization> list = new ArrayList<JWOrganization>();
-
-		while (set.next()) {
-			String orgCode = set.getString(1);
-			String orgName = set.getString(2);
-			String orgParentCode = set.getString(3);
-			String orgType = set.getString(4);
-			list.add(new JWOrganization(orgCode, orgName, orgParentCode, orgType));
-		}
-	}
-
 	List<JWOrganization> positionList = new ArrayList<JWOrganization>();// 只存储
 																		// 机构类型=岗位
 																		// 的org
-
 	/**
 	 * 构造 Org Tree，以公司以下业务部门开始查询作为根目录。不采用公司级别作为根目录减轻SQL对DB递归查询风险
 	 * 
@@ -151,7 +139,8 @@ public class BuildLdapTreeTest {
 				orgRoot = new JWOrganization(orgCode, orgName, orgParentCode,
 						orgType);
 				orgRoot.setId("ou=" + orgRoot.getOrgName());
-				orgService.createJWOrg(orgRoot);
+				
+				createOrg(orgRoot);
 			} else {
 				JWOrganization org = new JWOrganization(orgCode, orgName,
 						orgParentCode, orgType);
@@ -166,6 +155,12 @@ public class BuildLdapTreeTest {
 		addChild(orgRoot, list);// 生成组织树
 		return orgRoot;
 	}
+	
+	private void createOrg(JWOrganization org){
+		if(orgService.findJWOrg(org.getId()) == null){
+			orgService.createJWOrg(org);
+		}
+	}
 
 	private void addChild(JWOrganization father, List<JWOrganization> list) {
 		for (JWOrganization org : list) {
@@ -175,7 +170,7 @@ public class BuildLdapTreeTest {
 						father.getId()));
 				father.getChildren().add(org);
 				try {
-					orgService.createJWOrg(org);
+					createOrg(org);
 				} catch (NameAlreadyBoundException e1) {
 					e1.printStackTrace();
 				} catch (Exception e) {
@@ -241,15 +236,19 @@ public class BuildLdapTreeTest {
 	}
 
 	/**
-	 * 测试批量初始化添加用户
+	 * isAll 是否全量更新用户
+	 * 初始化添加用户
 	 */
 	// @Test
-	public void addPerson(List<JWOrganization> orgList) {
-		StringBuilder sb = new StringBuilder();
-		sb.append("select [部门],[岗位],[姓名],[用户名],[员工号],[邮箱],[密码] from hr_zh LEFT JOIN org_zh on hr_zh.[岗位] = org_zh.[机构编码] where 机构类型='岗位' and [密码] is not null");
-		SqlRowSet set = jdbcTemplate.queryForRowSet(sb.toString());
+	public void addPerson(List<JWOrganization> orgList, boolean isAll) {
+		SqlRowSet set = null;
+		if(isAll){
+			set = jdbcTemplate.queryForRowSet(allUserSQL);
+		} else {
+			set = jdbcTemplate.queryForRowSet(updateUserSQL);
+		}
 		
-		System.out.println("orgList大小:" + orgList.size());
+
 		while (set.next()) {
 			String dep = set.getString(1);
 			String postid = set.getString(2);// 岗位ID
@@ -263,7 +262,6 @@ public class BuildLdapTreeTest {
 			for (JWOrganization org : orgList) {
 				if (org.getOrgCode().equals(postid)) {
 					user.setId(LdapUtils.prepend(LdapUtils.newLdapName("cn=" + StringUtils.replace(username, "/", "")), org.getId()));
-					System.out.println(LdapUtils.newLdapName(user.getId()));
 					user.setTitle(org.getOrgName());
 				}
 			}
@@ -272,7 +270,10 @@ public class BuildLdapTreeTest {
 			user.setLastName(name);
 			user.setUid(username);
 			user.setUserPassword(pwd);
-			userService.createJWUser(user);
+			if(userService.findJWUser(LdapUtils.newLdapName(user.getId())) == null){
+				System.out.println("添加用户:" + LdapUtils.newLdapName(user.getId()));
+				userService.createJWUser(user);
+			}
 		}
 //		userService.createJWUser(userList);// 批量添加jwuser
 	}
@@ -293,14 +294,13 @@ public class BuildLdapTreeTest {
 	
 	@Test
 	public void searchPerson() {
-		User user = userService
-				.findUser("ou=103020601,ou=管理层,ou=慧云事业部,ou=业务,dc=openldap,dc=jw,dc=cn");
+		JWUser user = userService.findJWUser("cn=ZH201506003,ou=大数据平台研发工程师,ou=大数据平台部,ou=技术中心,ou=职能");
 		System.out.println(user.getEmail());
 	}
 	
 	@Test
 	public void searchOrg() {
-		JWOrganization jwOrg = orgService.findJWOrg("ou=103020601,ou=管理层,ou=慧云事业部,ou=业务");
+		JWOrganization jwOrg = orgService.findJWOrg("ou=管理层,ou=慧云事业部,ou=业务");
 		System.out.println(jwOrg.getFullName());
 	}
 	

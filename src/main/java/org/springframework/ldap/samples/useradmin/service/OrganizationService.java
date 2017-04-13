@@ -18,6 +18,7 @@ package org.springframework.ldap.samples.useradmin.service;
 
 import java.util.List;
 
+import javax.naming.Name;
 import javax.naming.ldap.LdapName;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,10 @@ public class OrganizationService implements BaseLdapNameAware {
     
     public JWOrganization findJWOrg(String orgId) {
         return jwOrgRepo.findOne(LdapUtils.newLdapName(orgId));
+    }
+    
+    public JWOrganization findJWOrg(Name orgId) {
+        return jwOrgRepo.findOne(orgId);
     }
 
 	@Override

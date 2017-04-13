@@ -81,6 +81,10 @@ public class UserService implements BaseLdapNameAware {
         return jwUserRepo.findOne(LdapUtils.newLdapName(userId));
     }
     
+    public JWUser findJWUser(Name userId) {
+        return jwUserRepo.findOne(userId);
+    }
+    
     public User findUser(String userId) {
         return userRepo.findOne(LdapUtils.newLdapName(userId));
     }
