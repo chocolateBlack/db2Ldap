@@ -1,9 +1,12 @@
 package ldap.db2ldap;
 
+import java.util.Set;
+
 import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.BasicAttributes;
+import javax.naming.ldap.LdapName;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,8 +19,11 @@ import org.springframework.ldap.samples.useradmin.domain.JWOrganization;
 import org.springframework.ldap.samples.useradmin.domain.JWUser;
 import org.springframework.ldap.samples.useradmin.service.OrganizationService;
 import org.springframework.ldap.samples.useradmin.service.UserService;
+import org.springframework.ldap.support.LdapNameBuilder;
 import org.springframework.ldap.support.LdapUtils;
 import org.springframework.ldap.test.LdapTestUtils;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.ldap.userdetails.DefaultLdapAuthoritiesPopulator;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -48,7 +54,7 @@ public class LdapTest {
     @Test
 	public void createUser(){
     	JWUser user = new JWUser();
-    	user.setId("cn=111, ou=慧通事业部, ou=业务");
+    	user.setId("cn=ZH201506006,ou=大数据平台研发工程师,ou=大数据平台部,ou=技术中心,ou=职能");
 		user.setEmail("123@126.com");
 		user.setEmployeeNumber("123");
 		user.setLastName("lastName");
@@ -57,13 +63,13 @@ public class LdapTest {
 		user.setUid("ZH201703019");
 		user.setUserPassword("c9c4c39a6ce3413ed32214ba89c1e777");
 		
-		userService.createJWUser(user);
+//		userService.createJWUser(user);
 		addMemberToGroup(user);
 //		ldapTemplate.create(user);
 	}
     
     /**
-     * 通过Attributes方式添加User
+     * 通过原生方式添加User
      */
 	@Test
 	public void createU(){
@@ -117,8 +123,8 @@ public class LdapTest {
 		ocattr.add("groupOfNames");
 		ocattr.add("top");
 		attr.put(ocattr);
-		attr.put("member", "cn=ZH201506006,ou=大数据平台研发工程师,ou=大数据平台部,ou=技术中心,ou=职能");
-		ldapTemplate.bind("cn=ROLE_USER, ou=Group", null, attr);
+		attr.put("member", "cn=ZH201506003,ou=大数据平台研发工程师,ou=大数据平台部,ou=技术中心,ou=职能,dc=openldap,dc=jw,dc=cn");
+		ldapTemplate.bind("cn=AUTHORITY_SYSTEM_USER, ou=Group", null, attr);
 	}
 	
 	
@@ -127,14 +133,16 @@ public class LdapTest {
      */
 	public void addMemberToGroup(JWUser savedUser){
 	    Group userGroup = groupRepo.findByName(GroupRepo.USER_GROUP);
+	    LdapName ldapName = LdapNameBuilder.newInstance("dc=openldap,dc=jw,dc=cn").add(savedUser.getId()).build();
 	    // The DN the member attribute must be absolute
-	    userGroup.addMember(LdapUtils.newLdapName(savedUser.getId()));
+//	    userGroup.addMember(LdapUtils.newLdapName(savedUser.getId()));
+	    userGroup.addMember(ldapName);
 	    groupRepo.save(userGroup);
 	}
 	
 	@Test
 	public void unbindOu(){
-		ldapTemplate.unbind("cn=ROLE_USER, ou=Group");
+		ldapTemplate.unbind("cn=AUTHORITY_SYSTEM_USER,ou=Group");
 	}
 	
 	/**
@@ -148,4 +156,11 @@ public class LdapTest {
 			e.printStackTrace();
 		}
 	}
+	@Test
+	public void getMemberFromGroup(){
+		String groupSearchBase = "ou=Group";
+		DefaultLdapAuthoritiesPopulator p = new DefaultLdapAuthoritiesPopulator(contextSource, groupSearchBase);
+		Set<GrantedAuthority> set = p.getGroupMembershipRoles("cn=ZH201506006,ou=大数据平台研发工程师,ou=大数据平台部,ou=技术中心,ou=职能", "ZH201506006");
+		System.out.println(set.size());
+	} 
 }

@@ -1,90 +1,145 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  ~ Copyright 2005-2013 the original author or authors.
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~      http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
+<!-- ~ Copyright 2005-2013 the original author or authors. ~ ~ Licensed under 
+	the Apache License, Version 2.0 (the "License"); ~ you may not use this file 
+	except in compliance with the License. ~ You may obtain a copy of the License 
+	at ~ ~ http://www.apache.org/licenses/LICENSE-2.0 ~ ~ Unless required by 
+	applicable law or agreed to in writing, software ~ distributed under the 
+	License is distributed on an "AS IS" BASIS, ~ WITHOUT WARRANTIES OR CONDITIONS 
+	OF ANY KIND, either express or implied. ~ See the License for the specific 
+	language governing permissions and ~ limitations under the License. -->
 
 <beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:context="http://www.springframework.org/schema/context"
-       xmlns:ldap="http://www.springframework.org/schema/ldap"
-       xmlns:p="http://www.springframework.org/schema/p"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/ldap http://www.springframework.org/schema/ldap/spring-ldap.xsd">
-       
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:ldap="http://www.springframework.org/schema/ldap" xmlns:security="http://www.springframework.org/schema/security"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd 
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd 
+       http://www.springframework.org/schema/ldap http://www.springframework.org/schema/ldap/spring-ldap.xsd
+	   http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd">
+	
+	<context:property-placeholder location="classpath:/ldap.properties"
+		system-properties-mode="OVERRIDE" ignore-unresolvable="true" />
+	<context:property-placeholder location="classpath:/db.properties"
+		system-properties-mode="OVERRIDE" ignore-unresolvable="true" />
+	<context:annotation-config />
 
-    <context:property-placeholder location="classpath:/ldap.properties" system-properties-mode="OVERRIDE" ignore-unresolvable="true"/>
-    <context:property-placeholder location="classpath:/db.properties" system-properties-mode="OVERRIDE" ignore-unresolvable="true"/>
-    <context:annotation-config />
+	<ldap:context-source id="contextSource" password="${sample.ldap.password}"
+		url="${sample.ldap.url}" username="${sample.ldap.userDn}" base="${sample.ldap.base}" />
 
-    <ldap:context-source id="contextSource"
-                         password="${sample.ldap.password}"
-                         url="${sample.ldap.url}"
-                         username="${sample.ldap.userDn}"
-                         base="${sample.ldap.base}" />
+	<ldap:ldap-template id="ldapTemplate"
+		context-source-ref="contextSource" />
 
-    <ldap:ldap-template id="ldapTemplate" context-source-ref="contextSource"/>
+	<!-- This will scan the org.springframework.ldap.samples.useradmin.domain 
+		package for interfaces extending CrudRepository (in our case, LdapRepository), 
+		automatically creating repository beans based on these interfaces. -->
+	<ldap:repositories base-package="org.springframework.ldap.samples.useradmin.domain" />
 
-    <!--
-        This will scan the org.springframework.ldap.samples.useradmin.domain package for interfaces
-        extending CrudRepository (in our case, LdapRepository), automatically creating repository
-        beans based on these interfaces.
-    -->
-    <ldap:repositories base-package="org.springframework.ldap.samples.useradmin.domain" />
+	<!-- This one will never be referenced directly, but the ldap:repositories 
+		tag will make sure it will be 'wired in', because the GroupRepo interface 
+		extends from an interface that GroupRepoImpl imlements. -->
+	<bean
+		class="org.springframework.ldap.samples.useradmin.domain.impl.GroupRepoImpl" />
+	<bean
+		class="org.springframework.ldap.samples.useradmin.domain.impl.DepartmentRepoImpl" />
+	<bean id="userService"
+		class="org.springframework.ldap.samples.useradmin.service.UserService">
+		<property name="directoryType" value="${sample.ldap.directory.type}" />
+	</bean>
+	<bean id="orgService"
+		class="org.springframework.ldap.samples.useradmin.service.OrganizationService">
+		<property name="directoryType" value="${sample.ldap.directory.type}" />
+	</bean>
 
-    <!--
-        This one will never be referenced directly, but the ldap:repositories tag will make sure
-        it will be 'wired in', because the GroupRepo interface extends from an interface that GroupRepoImpl
-        imlements.
-    -->
-    <bean class="org.springframework.ldap.samples.useradmin.domain.impl.GroupRepoImpl" />
-    <bean class="org.springframework.ldap.samples.useradmin.domain.impl.DepartmentRepoImpl" />
-    <bean id="userService" class="org.springframework.ldap.samples.useradmin.service.UserService">
-        <property name="directoryType" value="${sample.ldap.directory.type}" />
-    </bean>
-    <bean id="orgService" class="org.springframework.ldap.samples.useradmin.service.OrganizationService">
-        <property name="directoryType" value="${sample.ldap.directory.type}" />
-    </bean>
+	<!-- Required to make sure BaseLdapName is populated in UserService -->
+	<bean
+		class="org.springframework.ldap.core.support.BaseLdapPathBeanPostProcessor" />
 
-    <!-- Required to make sure BaseLdapName is populated in UserService -->
-    <bean class="org.springframework.ldap.core.support.BaseLdapPathBeanPostProcessor" />
+	<beans profile="no-apacheds">
+		<!-- Populates the LDAP server with initial data -->
+		<bean class="org.springframework.ldap.test.LdifPopulator">
+			<property name="contextSource" ref="contextSource" />
+			<property name="resource" value="classpath:/setup_data.ldif" />
+			<property name="base" value="${sample.ldap.base}" />
+			<property name="clean" value="${sample.ldap.clean}" />
+			<property name="defaultBase" value="dc=example,dc=com" />
+		</bean>
+	</beans>
 
-    <beans profile="no-apacheds">
-        <!-- Populates the LDAP server with initial data -->
-        <bean class="org.springframework.ldap.test.LdifPopulator">
-            <property name="contextSource" ref="contextSource" />
-            <property name="resource" value="classpath:/setup_data.ldif" />
-            <property name="base" value="${sample.ldap.base}" />
-            <property name="clean" value="${sample.ldap.clean}" />
-            <property name="defaultBase" value="dc=example,dc=com" />
-        </bean>
-    </beans>
-    
-    
-    <!--
-        relational database configuration
-    -->
-    
-    <beans>
-      	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate" p:dataSource-ref="dataSource"/>
-	    <bean id="dataSource" destroy-method="close"  
-	        class="org.apache.commons.dbcp.BasicDataSource">  
-	        <property name="driverClassName" value="${jdbc.driverClassName}" />  
-	        <property name="url" value="${jdbc.url}" />  
-	        <property name="username" value="${jdbc.username}" />  
-	        <property name="password" value="${jdbc.password}" />  
-	    </bean> 
-    </beans>
-    
-    
+
+	<!-- relational database configuration -->
+
+	<beans>
+		<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate"
+			p:dataSource-ref="dataSource" />
+		<bean id="dataSource" destroy-method="close"
+			class="org.apache.commons.dbcp.BasicDataSource">
+			<property name="driverClassName" value="${jdbc.driverClassName}" />
+			<property name="url" value="${jdbc.url}" />
+			<property name="username" value="${jdbc.username}" />
+			<property name="password" value="${jdbc.password}" />
+		</bean>
+	</beans>
+
+
+	<beans>
+		<bean id="ldapSource"
+			class="org.springframework.security.ldap.DefaultSpringSecurityContextSource">
+			<constructor-arg value="${sample.ldap.url}" />
+			<property name="userDn" value="${sample.ldap.userDn}" />
+			<property name="password" value="${sample.ldap.password}" />
+		</bean>
+
+		<bean id="userAuthProvider" class="ldap.db2ldap.authentication.UserAuthenticationProvider">
+			<constructor-arg>
+				<bean id="ldapUserAuthenticationProvider"
+					class="org.springframework.security.ldap.authentication.LdapAuthenticationProvider">
+					<constructor-arg>
+						<bean
+							class="org.springframework.security.ldap.authentication.BindAuthenticator">
+							<constructor-arg ref="ldapSource" />
+							<property name="userSearch">
+								<bean id="userSearch"
+									class="org.springframework.security.ldap.search.FilterBasedLdapUserSearch">
+									<constructor-arg index="0" value="${sample.ldap.base}" />
+									<constructor-arg index="1" value="cn={0}" />
+									<constructor-arg index="2" ref="ldapSource" />
+								</bean>
+							</property>
+						</bean>
+					</constructor-arg>
+					<constructor-arg>
+						<bean class="ldap.db2ldap.authentication.AuthoritiesPopulator">
+							<constructor-arg index="0" ref="ldapSource" />
+							<constructor-arg index="1"
+								value="ou=Group,dc=openldap,dc=jw,dc=cn" />
+							<constructor-arg index="2" value="${ldap.acl.adminRole}" />
+							<constructor-arg index="3" value="${ldap.acl.defaultRole}" />
+						</bean>
+					</constructor-arg>
+				</bean>
+			</constructor-arg>
+		</bean>
+	</beans>
+	
+ 	<beans>
+		<bean id="ldapUserDetailService"
+			class="org.springframework.security.ldap.userdetails.LdapUserDetailsService">
+			<constructor-arg>
+				<bean id="userSearch"
+					class="org.springframework.security.ldap.search.FilterBasedLdapUserSearch">
+					<constructor-arg index="0" value="${sample.ldap.base}" />
+					<constructor-arg index="1" value="cn={0}" />
+					<constructor-arg index="2" ref="ldapSource" />
+				</bean>
+			</constructor-arg>
+			<constructor-arg>
+				<bean class="ldap.db2ldap.authentication.AuthoritiesPopulator">
+					<constructor-arg index="0" ref="ldapSource" />
+					<constructor-arg index="1" value="ou=Group,dc=openldap,dc=jw,dc=cn" />
+					<constructor-arg index="2" value="${ldap.acl.adminRole}" />
+					<constructor-arg index="3" value="${ldap.acl.defaultRole}" />
+				</bean>
+			</constructor-arg>
+		</bean>
+	</beans>
 </beans>

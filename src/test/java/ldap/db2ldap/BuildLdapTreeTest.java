@@ -27,6 +27,7 @@ import org.springframework.ldap.samples.useradmin.domain.JWUser;
 import org.springframework.ldap.samples.useradmin.service.OrganizationService;
 import org.springframework.ldap.samples.useradmin.service.UserService;
 import org.springframework.ldap.support.LdapUtils;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.StringUtils;
@@ -51,6 +52,9 @@ public class BuildLdapTreeTest {
 	@Autowired
 	private OrganizationService orgService;
 	
+	@Autowired
+	private AuthenticationProvider userAuthProvider;
+	
 	String allUserSQL = "select [部门],[岗位],[姓名],[用户名],[员工号],[邮箱],[密码] from hr_zh LEFT JOIN org_zh on hr_zh.[岗位] = org_zh.[机构编码] where 机构类型='岗位' and [密码] is not null";
 	
 	String updateUserSQL = allUserSQL + " and CONVERT(varchar(100), [修改时间], 23) = CONVERT(varchar(100), getdate()-1, 23)";
@@ -61,16 +65,15 @@ public class BuildLdapTreeTest {
 	@Test
 	public void test() {
 		List<JWOrganization> depList = getOrgRoot();// 查询组织结构
-		System.out.println(System.currentTimeMillis());
+		log.info("LDAP组织结构同步：" + System.currentTimeMillis());
 		// 部门及岗位
 		for (JWOrganization org : depList) {
 			getOrgTree(org.getOrgCode()); // 再添加部门下的节点
 		}
-		System.out.println(System.currentTimeMillis());
+		log.info("LDAP人员同步：" + System.currentTimeMillis());
 		// 人员
 		addPerson(positionList, true);
-		System.out.println(System.currentTimeMillis());
-		// initPerson();
+		log.info("LDAP组织人员同步结束：" + System.currentTimeMillis());
 	}
 
 	/**
@@ -159,6 +162,7 @@ public class BuildLdapTreeTest {
 	private void createOrg(JWOrganization org){
 		if(orgService.findJWOrg(org.getId()) == null){
 			orgService.createJWOrg(org);
+			log.info("LDAP组织结构更新：" + LdapUtils.newLdapName(org.getId()));
 		}
 	}
 
@@ -218,6 +222,9 @@ public class BuildLdapTreeTest {
 				childName = LdapUtils.prepend(childName, name);
 
 				try {
+					if(element.getName().equals("ou=Group")){
+						continue;//不清空Group内信息
+					}
 					ctx.unbind(childName);
 				} catch (ContextNotEmptyException e) {
 					clearSubContexts(ctx, childName);
@@ -271,26 +278,12 @@ public class BuildLdapTreeTest {
 			user.setUid(username);
 			user.setUserPassword(pwd);
 			if(userService.findJWUser(LdapUtils.newLdapName(user.getId())) == null){
-				System.out.println("添加用户:" + LdapUtils.newLdapName(user.getId()));
+				log.info("LDAP组织结构更新：" + LdapUtils.newLdapName(user.getId()));
 				userService.createJWUser(user);
 			}
 		}
 //		userService.createJWUser(userList);// 批量添加jwuser
 	}
-
-	
-//	@Test
-//	public void testKylinAuth() {
-//		UserAuthenticationProvider provider = userAuthProvider;
-//		UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("hadoop", "apU)u%7lk,-7o");
-//		log.info("provider: " + provider.getClass().getName());
-//		Authentication au = provider.authenticate(authentication);
-//		log.info(au);
-//		log.info(au.getCredentials());
-//		log.info(au.getPrincipal());
-//		log.info(au.getDetails());
-//	}
-//	
 	
 	@Test
 	public void searchPerson() {

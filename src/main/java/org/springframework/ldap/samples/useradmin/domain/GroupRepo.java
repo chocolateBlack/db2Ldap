@@ -39,7 +39,7 @@ import java.util.Collection;
  * @author Mattias Hellborg Arthursson
  */
 public interface GroupRepo extends LdapRepository<Group>, GroupRepoExtension {
-    public final static String USER_GROUP = "ROLE_USER";
+    public final static String USER_GROUP = "ROLE_ADMIN";
 
     Group findByName(String groupName);
 
