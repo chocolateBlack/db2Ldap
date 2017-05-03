@@ -34,13 +34,6 @@
 		automatically creating repository beans based on these interfaces. -->
 	<ldap:repositories base-package="org.springframework.ldap.samples.useradmin.domain" />
 
-	<!-- This one will never be referenced directly, but the ldap:repositories 
-		tag will make sure it will be 'wired in', because the GroupRepo interface 
-		extends from an interface that GroupRepoImpl imlements. -->
-	<bean
-		class="org.springframework.ldap.samples.useradmin.domain.impl.GroupRepoImpl" />
-	<bean
-		class="org.springframework.ldap.samples.useradmin.domain.impl.DepartmentRepoImpl" />
 	<bean id="userService"
 		class="org.springframework.ldap.samples.useradmin.service.UserService">
 		<property name="directoryType" value="${sample.ldap.directory.type}" />
@@ -87,59 +80,6 @@
 			<constructor-arg value="${sample.ldap.url}" />
 			<property name="userDn" value="${sample.ldap.userDn}" />
 			<property name="password" value="${sample.ldap.password}" />
-		</bean>
-
-		<bean id="userAuthProvider" class="ldap.db2ldap.authentication.UserAuthenticationProvider">
-			<constructor-arg>
-				<bean id="ldapUserAuthenticationProvider"
-					class="org.springframework.security.ldap.authentication.LdapAuthenticationProvider">
-					<constructor-arg>
-						<bean
-							class="org.springframework.security.ldap.authentication.BindAuthenticator">
-							<constructor-arg ref="ldapSource" />
-							<property name="userSearch">
-								<bean id="userSearch"
-									class="org.springframework.security.ldap.search.FilterBasedLdapUserSearch">
-									<constructor-arg index="0" value="${sample.ldap.base}" />
-									<constructor-arg index="1" value="cn={0}" />
-									<constructor-arg index="2" ref="ldapSource" />
-								</bean>
-							</property>
-						</bean>
-					</constructor-arg>
-					<constructor-arg>
-						<bean class="ldap.db2ldap.authentication.AuthoritiesPopulator">
-							<constructor-arg index="0" ref="ldapSource" />
-							<constructor-arg index="1"
-								value="ou=Group,dc=openldap,dc=jw,dc=cn" />
-							<constructor-arg index="2" value="${ldap.acl.adminRole}" />
-							<constructor-arg index="3" value="${ldap.acl.defaultRole}" />
-						</bean>
-					</constructor-arg>
-				</bean>
-			</constructor-arg>
-		</bean>
-	</beans>
-	
- 	<beans>
-		<bean id="ldapUserDetailService"
-			class="org.springframework.security.ldap.userdetails.LdapUserDetailsService">
-			<constructor-arg>
-				<bean id="userSearch"
-					class="org.springframework.security.ldap.search.FilterBasedLdapUserSearch">
-					<constructor-arg index="0" value="${sample.ldap.base}" />
-					<constructor-arg index="1" value="cn={0}" />
-					<constructor-arg index="2" ref="ldapSource" />
-				</bean>
-			</constructor-arg>
-			<constructor-arg>
-				<bean class="ldap.db2ldap.authentication.AuthoritiesPopulator">
-					<constructor-arg index="0" ref="ldapSource" />
-					<constructor-arg index="1" value="ou=Group,dc=openldap,dc=jw,dc=cn" />
-					<constructor-arg index="2" value="${ldap.acl.adminRole}" />
-					<constructor-arg index="3" value="${ldap.acl.defaultRole}" />
-				</bean>
-			</constructor-arg>
 		</bean>
 	</beans>
 </beans>
