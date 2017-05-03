@@ -13,9 +13,9 @@
 	<properties>
 		<log4j.version>1.2.17</log4j.version>
 		<slf4j.version>1.7.5</slf4j.version>
-		
+
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring.framework.version>3.2.17.RELEASE</spring.framework.version>
+		<spring.framework.version>3.2.13.RELEASE</spring.framework.version>
 		<spring.framework.security.version>3.1.2.RELEASE</spring.framework.security.version>
 		<spring.framework.security.extensions.version>1.0.2.RELEASE</spring.framework.security.extensions.version>
 	</properties>
@@ -66,50 +66,66 @@
 			<version>15.0</version>
 			<scope>compile</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.springframework.data</groupId>
-			<artifactId>spring-data-commons</artifactId>
-			<version>1.11.0.RELEASE</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.ldap</groupId>
-			<artifactId>spring-ldap-test</artifactId>
-			<version>2.0.4.RELEASE</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-context</artifactId>
-			<version>3.2.13.RELEASE</version>
-		</dependency>
+
 
 		<dependency>
 			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+			<version>${spring.framework.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
 			<artifactId>spring-jdbc</artifactId>
-			<version>3.2.13.RELEASE</version>
+			<version>${spring.framework.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-test</artifactId>
-			<version>3.2.13.RELEASE</version>
+			<version>${spring.framework.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-webmvc</artifactId>
-			<version>3.2.13.RELEASE</version>
+			<version>${spring.framework.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.ldap</groupId>
 			<artifactId>spring-ldap-core</artifactId>
 			<version>2.0.4.RELEASE</version>
 		</dependency>
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-ldap</artifactId>
-            <version>3.1.2.RELEASE</version>
-        </dependency>
-
-		<!--  Apache Commons  --> 
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-ldap</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>org.springframework.ldap</groupId>
+				  	<artifactId>spring-ldap-core</artifactId>
+			  	</exclusion>
+			</exclusions>
+			<version>3.2.7.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-commons</artifactId>
+			<version>1.8.5.RELEASE</version>
+<!-- 			<exclusions>
+				<exclusion>
+				  <groupId>org.springframework</groupId>
+				  <artifactId>spring-core</artifactId>
+				</exclusion>
+				<exclusion>
+				  <groupId>org.springframework</groupId>
+				  <artifactId>spring-beans</artifactId>
+				</exclusion>
+			</exclusions> -->
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.ldap</groupId>
+			<artifactId>spring-ldap-test</artifactId>
+			<version>2.0.4.RELEASE</version>
+		</dependency>
+		<!-- Apache Commons -->
 		<dependency>
 			<groupId>commons-pool</groupId>
 			<artifactId>commons-pool</artifactId>
@@ -128,8 +144,52 @@
 	</dependencies>
 
 	<build>
-		<plugins>
+		<plugins>			
 			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.4</version>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>ldap.db2ldap.BuildLdap</mainClass>
+						</manifest>
+					</archive>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+				</configuration>
+			</plugin>
+			<plugin>
+		        <groupId>org.apache.maven.plugins</groupId>
+		        <artifactId>maven-shade-plugin</artifactId>
+		        <version>2.4</version>
+		        <executions>
+		            <execution>
+		                <phase>package</phase>
+		                <goals>
+		                    <goal>shade</goal>
+		                </goals>
+		                <configuration>
+		                        <transformers>
+		                            <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">  
+		                                <resource>META-INF/spring.handlers</resource>  
+		                            </transformer>
+		                            <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">  
+		                                <resource>META-INF/spring.schemas</resource>  
+		                            </transformer>
+		                            <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">  
+		                                <resource>META-INF/spring.tooling</resource>  
+		                            </transformer>
+		                            <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+		                                <mainClass>ldap.db2ldap.BuildLdap</mainClass>
+		                            </transformer>
+		                        </transformers>
+		                </configuration>
+		            </execution>
+		        </executions>
+		      </plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
 					<source>1.7</source>
