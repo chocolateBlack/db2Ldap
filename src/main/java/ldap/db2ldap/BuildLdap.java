@@ -284,7 +284,7 @@ public class BuildLdap{
 			user.setUserPassword(pwd);
 			if(userService.findJWUser(LdapUtils.newLdapName(user.getId())) == null){
 				log.info("LDAP组织结构更新：" + LdapUtils.newLdapName(user.getId()));
-				userService.createJWUser(user);
+				userService.createJWUser(user);//暂时没有实现批量添加用户
 			}
 		}
 //		userService.createJWUser(userList);// 批量添加jwuser
